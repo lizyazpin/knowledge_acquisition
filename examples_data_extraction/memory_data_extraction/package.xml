@@ -1,0 +1,38 @@
+<package>
+  <name>memory_data_extraction</name>
+  
+  <version>1.0.0</version>
+  
+  <description>data_manage user package</description>
+  
+  <maintainer email="salinas@todo.todo">salinas</maintainer>
+  
+  <license>GPL</license>
+  
+  <url type="website">http://www.knowrob.org/</url>
+  
+  <author>lizyazpin</author>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>rospkg</build_depend>
+  <build_depend>gazebo_msgs</build_depend>
+
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>rospkg</run_depend>
+  <run_depend>gazebo_msgs</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+
+</package>

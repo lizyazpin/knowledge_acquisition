@@ -1,0 +1,86 @@
+<html><head>
+<title>rvizMarkers.py</title>
+<meta name="Generator" content="htmlizer/[twisted, version 13.2.0]" />
+<link rel="alternate" href="rvizMarkers.py" type="text/x-python" />
+
+</head>
+<body>
+<pre><span class="py-src-comment">#!/usr/bin/env python</span>
+
+<span class="py-src-keyword">import</span> <span class="py-src-variable">rospy</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">std_msgs</span>.<span class="py-src-variable">msg</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">String</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">geometry_msgs</span>.<span class="py-src-variable">msg</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">PointStamped</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">visualization_msgs</span>.<span class="py-src-variable">msg</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">Marker</span>
+
+<span class="py-src-variable">_ACTIONS</span> = [(<span class="py-src-string">'N'</span>, [<span class="py-src-number">0</span>,-<span class="py-src-number">1</span>]),(<span class="py-src-string">'E'</span>, [-<span class="py-src-number">1</span>,<span class="py-src-number">0</span>]),(<span class="py-src-string">'S'</span>,[<span class="py-src-number">0</span>,<span class="py-src-number">1</span>]),(<span class="py-src-string">'W'</span>,[<span class="py-src-number">1</span>,<span class="py-src-number">0</span>]),(<span class="py-src-string">'NE'</span>,[-<span class="py-src-number">1</span>,-<span class="py-src-number">1</span>]),(<span class="py-src-string">'NW'</span>,[<span class="py-src-number">1</span>,-<span class="py-src-number">1</span>]),(<span class="py-src-string">'SE'</span>,[-<span class="py-src-number">1</span>,<span class="py-src-number">1</span>]),(<span class="py-src-string">'SW'</span>,[<span class="py-src-number">1</span>,<span class="py-src-number">1</span>]), (<span class="py-src-string">'STAY'</span>,[<span class="py-src-number">0</span>,<span class="py-src-number">0</span>])]
+<span class="py-src-variable">_X</span> = <span class="py-src-number">0</span>
+<span class="py-src-variable">_Y</span> = <span class="py-src-number">1</span>
+
+<span class="py-src-keyword">class</span> <span class="py-src-identifier">stateNode</span>():
+
+    <span class="py-src-keyword">def</span> <span class="py-src-identifier">__init__</span>(<span class="py-src-parameter">self</span>):
+        <span class="py-src-variable">pub</span> = <span class="py-src-variable">rospy</span>.<span class="py-src-variable">Publisher</span>(<span class="py-src-string">'state'</span>, <span class="py-src-variable">PointStamped</span>, <span class="py-src-variable">queue_size</span>=<span class="py-src-number">10</span>)
+        <span class="py-src-variable">markerPub</span> = <span class="py-src-variable">rospy</span>.<span class="py-src-variable">Publisher</span>(<span class="py-src-string">'robotMarker'</span>, <span class="py-src-variable">Marker</span>, <span class="py-src-variable">queue_size</span>=<span class="py-src-number">10</span>)
+        <span class="py-src-variable">rospy</span>.<span class="py-src-variable">Subscriber</span>(<span class="py-src-string">"action"</span>, <span class="py-src-variable">String</span>, <span class="py-src-variable">self</span>.<span class="py-src-variable">move_callback</span>)
+
+        <span class="py-src-variable">rospy</span>.<span class="py-src-variable">init_node</span>(<span class="py-src-string">'stateNode'</span>, <span class="py-src-variable">anonymous</span>=<span class="py-src-variable">True</span>)
+
+        <span class="py-src-variable">rate</span> = <span class="py-src-variable">rospy</span>.<span class="py-src-variable">Rate</span>(<span class="py-src-number">1</span>)
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span> = <span class="py-src-variable">PointStamped</span>()
+
+        <span class="py-src-comment"># initial starting location I might want to move to the param list</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">h</span> = <span class="py-src-variable">rospy</span>.<span class="py-src-variable">get_param</span>(<span class="py-src-string">"height"</span>, <span class="py-src-number">100</span>)
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">w</span> = <span class="py-src-variable">rospy</span>.<span class="py-src-variable">get_param</span>(<span class="py-src-string">"width"</span>, <span class="py-src-number">100</span>)
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">x</span> = <span class="py-src-variable">self</span>.<span class="py-src-variable">h</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">y</span> = <span class="py-src-variable">self</span>.<span class="py-src-variable">w</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">z</span> = <span class="py-src-number">0</span>
+
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span> = <span class="py-src-variable">Marker</span>()
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">header</span>.<span class="py-src-variable">frame_id</span> = <span class="py-src-string">"/Cmap"</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">header</span>.<span class="py-src-variable">stamp</span>    = <span class="py-src-variable">rospy</span>.<span class="py-src-variable">get_rostime</span>()
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">ns</span> = <span class="py-src-string">"robot"</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">id</span> = <span class="py-src-number">0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">type</span> = <span class="py-src-number">2</span> <span class="py-src-comment"># sphere</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">action</span> = <span class="py-src-number">0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">pose</span>.<span class="py-src-variable">position</span> = <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">pose</span>.<span class="py-src-variable">orientation</span>.<span class="py-src-variable">x</span> = <span class="py-src-number">0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">pose</span>.<span class="py-src-variable">orientation</span>.<span class="py-src-variable">y</span> = <span class="py-src-number">0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">pose</span>.<span class="py-src-variable">orientation</span>.<span class="py-src-variable">z</span> = <span class="py-src-number">0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">pose</span>.<span class="py-src-variable">orientation</span>.<span class="py-src-variable">w</span> = <span class="py-src-number">1.0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">scale</span>.<span class="py-src-variable">x</span> = <span class="py-src-number">1.0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">scale</span>.<span class="py-src-variable">y</span> = <span class="py-src-number">1.0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">scale</span>.<span class="py-src-variable">z</span> = <span class="py-src-number">1.0</span>
+
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">color</span>.<span class="py-src-variable">r</span> = <span class="py-src-number">0.0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">color</span>.<span class="py-src-variable">g</span> = <span class="py-src-number">1.0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">color</span>.<span class="py-src-variable">b</span> = <span class="py-src-number">0.0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">color</span>.<span class="py-src-variable">a</span> = <span class="py-src-number">1.0</span>
+
+        <span class="py-src-comment">#self.robotMarker.lifetime = 0</span>
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">lifetime</span> = <span class="py-src-variable">rospy</span>.<span class="py-src-variable">Duration</span>(<span class="py-src-number">0</span>)
+        <span class="py-src-keyword">while</span> <span class="py-src-keyword">not</span> <span class="py-src-variable">rospy</span>.<span class="py-src-variable">is_shutdown</span>():
+            <span class="py-src-variable">pub</span>.<span class="py-src-variable">publish</span>(<span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>)
+            <span class="py-src-variable">markerPub</span>.<span class="py-src-variable">publish</span>(<span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>)
+            <span class="py-src-keyword">print</span> <span class="py-src-string">"sending marker"</span>, <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>
+            <span class="py-src-variable">rate</span>.<span class="py-src-variable">sleep</span>()
+
+    <span class="py-src-keyword">def</span> <span class="py-src-identifier">move_callback</span>(<span class="py-src-parameter">self</span>, <span class="py-src-parameter">action</span>):
+        <span class="py-src-keyword">for</span> <span class="py-src-variable">i</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">_ACTIONS</span>:
+            <span class="py-src-keyword">if</span> <span class="py-src-variable">String</span>(<span class="py-src-variable">i</span>[<span class="py-src-number">0</span>]) == <span class="py-src-variable">action</span>:
+
+                <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">x</span> = <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">x</span> + <span class="py-src-variable">i</span>[<span class="py-src-number">1</span>][<span class="py-src-variable">_X</span>]
+                <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">y</span> = <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">y</span> + <span class="py-src-variable">i</span>[<span class="py-src-number">1</span>][<span class="py-src-variable">_Y</span>]
+
+                <span class="py-src-keyword">if</span> <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">x</span>&gt;<span class="py-src-variable">self</span>.<span class="py-src-variable">h</span>:
+                    <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">x</span> = <span class="py-src-variable">self</span>.<span class="py-src-variable">h</span>
+                <span class="py-src-keyword">if</span> <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">y</span>&gt;<span class="py-src-variable">self</span>.<span class="py-src-variable">w</span>:
+                    <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">y</span> = <span class="py-src-variable">self</span>.<span class="py-src-variable">w</span>
+
+                <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">z</span> = <span class="py-src-number">0</span>
+                <span class="py-src-variable">self</span>.<span class="py-src-variable">robotMarker</span>.<span class="py-src-variable">pose</span>.<span class="py-src-variable">position</span> = <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>
+                <span class="py-src-comment"># print i</span>
+                <span class="py-src-keyword">print</span> <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">x</span>, <span class="py-src-variable">self</span>.<span class="py-src-variable">state</span>.<span class="py-src-variable">point</span>.<span class="py-src-variable">y</span>
+
+<span class="py-src-variable">stateNode</span>()
+</pre>
+</body>
